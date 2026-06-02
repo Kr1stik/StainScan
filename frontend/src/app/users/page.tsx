@@ -18,6 +18,7 @@ interface User {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
@@ -25,13 +26,14 @@ export default function UserManagementPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/admin/users/');
+        const response = await fetch('http://localhost:8000/api/admin/users/', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setUsers(data);
         }
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
+      } catch (err) {
+        console.error("Network Error:", err);
+        setError("Unable to connect to the backend database. Please ensure the Django server is running.");
       } finally {
         setIsLoading(false);
       }
@@ -59,6 +61,12 @@ export default function UserManagementPage() {
       <Sidebar />
 
       <main className="flex-1 ml-64 p-8 overflow-y-auto">
+        {error && (
+          <div className="p-4 mb-6 text-sm font-bold text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-800 rounded-2xl flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            {error}
+          </div>
+        )}
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>

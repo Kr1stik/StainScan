@@ -1,40 +1,63 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  User, 
+import {
+  LayoutDashboard,
+  User,
   Users,
   History,
-  Settings
+  Terminal,
+  Settings,
+  Menu,
+  Key
 } from 'lucide-react';
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'User Management', href: '/users', icon: Users },
-    { name: 'Profile Management', href: '/profile', icon: User },
+    { name: 'Password Reset', href: '/password-reset-requests', icon: Key },
+    { name: 'Profile', href: '/profile', icon: User },
     { name: 'Activity History', href: '/history', icon: History },
+    { name: 'System Logs', href: '/logs', icon: Terminal },
   ];
 
   const settingsLink = { name: 'Settings', href: '/settings', icon: Settings };
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#111] border-r border-gray-100 dark:border-gray-800 flex flex-col z-30 shadow-sm transition-colors duration-300">
-      {/* Branding Header */}
-      <div className="p-6 flex items-center gap-3">
-        <div className="bg-cyan-50 dark:bg-cyan-900/20 p-1.5 rounded-xl border border-cyan-100 dark:border-cyan-800">
-          <img src="/logo.png" alt="StainScan Logo" className="h-8 w-8 object-contain" />
-        </div>
-        <span className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">StainScan</span>
+    <aside className={`fixed left-0 top-0 h-full bg-white dark:bg-[#111] border-r border-gray-100 dark:border-gray-800 flex flex-col z-30 shadow-sm transition-all duration-300 ease-in-out ${isCollapsed ? 'w-[72px]' : 'w-64'}`}>
+      {/* Top Header (Conditional Hamburger/Logo Toggle) */}
+      <div 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className={`flex items-center h-16 px-4 mt-2 mb-4 cursor-pointer group transition-all duration-300 ${isCollapsed ? 'justify-center' : 'px-6'}`}
+        title={isCollapsed ? "Expand menu" : "Collapse menu"}
+      >
+        {isCollapsed ? (
+          <div className="p-3 text-gray-500 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 group-hover:bg-gray-50 dark:group-hover:bg-gray-800 rounded-full transition-all animate-in fade-in duration-300">
+            <Menu size={22} />
+          </div>
+        ) : (
+          <div className="flex items-center justify-between w-full animate-in fade-in slide-in-from-left-2 duration-300">
+            <div className="flex items-center">
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 p-1 rounded-lg border border-cyan-100 dark:border-cyan-800 mr-3 shadow-sm">
+                <img src="/logo.png" alt="StainScan" className="h-6 w-6 object-contain" />
+              </div>
+              <span className="text-lg font-black text-gray-900 dark:text-white tracking-tight">StainScan</span>
+            </div>
+            <div className="text-gray-400 group-hover:text-cyan-500 transition-colors">
+              <Menu size={18} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Top Navigation Links */}
-      <nav className="flex-1 p-4 space-y-1.5 mt-2">
+      {/* Navigation Links (Gemini Hover Effect) */}
+      <nav className="flex-1 px-3 space-y-1">
         {navLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -43,35 +66,43 @@ const Sidebar = () => {
             <Link
               key={link.href}
               href={link.href}
+              title={isCollapsed ? link.name : ""}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200
+                flex items-center h-12 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer
+                ${isCollapsed ? 'px-3 justify-start' : 'px-4'}
                 ${isActive 
-                  ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/30 shadow-sm shadow-cyan-100/30' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50/50 dark:hover:bg-cyan-900/10'
+                  ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/30' 
+                  : 'text-gray-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 }
               `}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              {link.name}
+              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100 pl-4'}`}>
+                {link.name}
+              </span>
             </Link>
           );
         })}
       </nav>
 
       {/* Settings at bottom */}
-      <div className="p-4 border-t border-gray-50 dark:border-gray-800">
+      <div className="px-3 pb-4 border-t border-gray-50 dark:border-gray-800 pt-4">
         <Link
           href={settingsLink.href}
+          title={isCollapsed ? settingsLink.name : ""}
           className={`
-            flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200
+            flex items-center h-12 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer
+            ${isCollapsed ? 'px-3 justify-start' : 'px-4'}
             ${pathname === settingsLink.href
-              ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/30 shadow-sm shadow-cyan-100/30' 
-              : 'text-gray-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50/50 dark:hover:bg-cyan-900/10'
+              ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/30' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
             }
           `}
         >
-          <settingsLink.icon size={20} strokeWidth={pathname === settingsLink.href ? 2.5 : 2} />
-          {settingsLink.name}
+          <settingsLink.icon size={22} strokeWidth={pathname === settingsLink.href ? 2.5 : 2} className="shrink-0" />
+          <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100 pl-4'}`}>
+            {settingsLink.name}
+          </span>
         </Link>
       </div>
     </aside>
