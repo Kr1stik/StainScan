@@ -128,6 +128,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 # Allow production client and local dev to connect
 CORS_ALLOWED_ORIGINS = [
     os.environ.get("FRONTEND_URL", "http://localhost:3000"),
