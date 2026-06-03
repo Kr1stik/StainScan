@@ -5,6 +5,8 @@ import { User, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import the Next.js router
 import { toast } from 'sonner';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +22,7 @@ export default function LoginForm() {
 
     try {
       // 1. Send the username and password to Django
-      const response = await fetch('http://localhost:8000/api/login/', {
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
