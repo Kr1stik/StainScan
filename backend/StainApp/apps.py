@@ -37,20 +37,32 @@ def run_system_setup(sender, **kwargs):
                     if item.get('model') == 'StainApp.scan':
                         fields = item.get('fields', {})
                         
-                        # Dynamically bypass the missing user row block by linking the scan to admin1
-                        scans_to_create.append(Scan(
+                        # Create the scan instance model instance object template
+                        scan_instance = Scan(
                             user=admin_user,
                             garment=fields.get('garment', 'Mobile Scan'),
                             stain_detected=fields.get('stain_detected', 'Unknown'),
                             confidence=fields.get('confidence'),
                             confidence_score=fields.get('confidence_score', 0),
-                            is_approved=fields.get('is_approved', True),
-                            date=fields.get('date') # Keeps original historical timestamps
-                        ))
+                            is_approved=fields.get('is_approved', True)
+                        )
+                        
+                        # Explicitly prepare the historical date overwrite
+                        historical_date = fields.get('date')
+                        if historical_date:
+                            scan_instance.date = historical_date
+                        
+                        scans_to_create.append(scan_instance)
                 
                 if scans_to_create:
-                    Scan.objects.bulk_create(scans_to_create)
-                    print(f"✅ Cloud database seeded successfully with {len(scans_to_create)} records!")
+                    # Using individual saves followed by forced updates allows bypassing auto_now_add locks
+                    for scan in scans_to_create:
+                        scan.save()
+                        if scan.date:
+                            # Double force the database column value to match the exact string timestamp
+                            Scan.objects.filter(id=scan.id).update(date=scan.date)
+                            
+                    print(f"✅ Cloud database seeded successfully with {len(scans_to_create)} historical records!")
             else:
                 print("⚠️ Seed skipped: local_data.json not found.")
 
