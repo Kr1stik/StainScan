@@ -7,6 +7,9 @@ def run_system_setup(sender, **kwargs):
         from StainApp.models import Scan
         from django.core.management import call_command
 
+        # TEMPORARY CLEANUP LINE: Un-comment this line once to completely clear out the bad 2026 scan entries
+        Scan.objects.all().delete()
+
         User = get_user_model()
 
         # 1. Setup Admin Account
