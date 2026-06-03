@@ -24,8 +24,33 @@ def run_system_setup(sender, **kwargs):
             print("📦 Live System Setup: Cloud database empty. Seeding local history...")
             fixture_path = os.path.join(os.path.dirname(__file__), '..', 'local_data.json')
             if os.path.exists(fixture_path):
-                call_command('loaddata', fixture_path)
-                print("✅ Cloud database seeded successfully!")
+                import json
+                with open(fixture_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # Grab the admin user we just verified/created above
+                admin_user = User.objects.get(username=admin_username)
+                scans_to_create = []
+                
+                for item in data:
+                    # Only pull items belonging to your Scan model structure
+                    if item.get('model') == 'StainApp.scan':
+                        fields = item.get('fields', {})
+                        
+                        # Dynamically bypass the missing user row block by linking the scan to admin1
+                        scans_to_create.append(Scan(
+                            user=admin_user,
+                            garment=fields.get('garment', 'Mobile Scan'),
+                            stain_detected=fields.get('stain_detected', 'Unknown'),
+                            confidence=fields.get('confidence'),
+                            confidence_score=fields.get('confidence_score', 0),
+                            is_approved=fields.get('is_approved', True),
+                            date=fields.get('date') # Keeps original historical timestamps
+                        ))
+                
+                if scans_to_create:
+                    Scan.objects.bulk_create(scans_to_create)
+                    print(f"✅ Cloud database seeded successfully with {len(scans_to_create)} records!")
             else:
                 print("⚠️ Seed skipped: local_data.json not found.")
 
