@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface DashboardStats {
   totalUsers: number;
   totalScans: number;
@@ -48,7 +50,7 @@ export default function DashboardPage() {
   const fetchActivities = async () => {
     try {
       setIsRefreshingActivities(true);
-      const activitiesRes = await fetch('http://localhost:8000/api/admin/recent-activity/', { cache: 'no-store' });
+      const activitiesRes = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/recent-activity/`, { cache: 'no-store' });
       if (activitiesRes.ok) {
         const activitiesData = await activitiesRes.json();
         setActivities(activitiesData);
@@ -62,7 +64,7 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const statsRes = await fetch(`http://localhost:8000/api/admin/dashboard/`, { cache: 'no-store' });
+      const statsRes = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/dashboard/`, { cache: 'no-store' });
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData);

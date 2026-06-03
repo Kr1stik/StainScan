@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Terminal, ShieldAlert, AlertTriangle, Info, Clock, User, Loader2, RefreshCcw } from 'lucide-react';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface SystemLog {
   id: number;
   log_level: string;
@@ -20,7 +22,7 @@ export default function SystemLogsPage() {
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('http://localhost:8000/api/admin/system-logs/');
+      const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/system-logs/`);
       if (res.ok) setLogs(await res.json());
     } catch (err) {
       console.error("Log Fetch Error:", err);

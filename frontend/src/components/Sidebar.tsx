@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   User,
   Users,
+  Archive,
   History,
   Terminal,
   Settings,
@@ -21,6 +22,7 @@ const Sidebar = () => {
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'User Management', href: '/users', icon: Users },
+    { name: 'Archived Accounts', href: '/dashboard/users/archive', icon: Archive },
     { name: 'Password Reset', href: '/password-reset-requests', icon: Key },
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Activity History', href: '/history', icon: History },

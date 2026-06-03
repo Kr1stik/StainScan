@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Mail, Calendar, Check, X, Loader2, Clock, Shield } from 'lucide-react';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface PasswordResetRequest {
   id: number;
   email: string;
@@ -21,7 +23,7 @@ export default function PasswordResetRequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/password-reset-requests/', { cache: 'no-store' });
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/password-reset-requests/`, { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setRequests(data);
@@ -37,7 +39,7 @@ export default function PasswordResetRequestsPage() {
   const approveRequest = async (requestId: number) => {
     setApproving(requestId);
     try {
-      const response = await fetch(`http://localhost:8000/api/password-reset-requests/${requestId}/approve/`, {
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/password-reset-requests/${requestId}/approve/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -54,7 +56,7 @@ export default function PasswordResetRequestsPage() {
   const rejectRequest = async (requestId: number) => {
     setRejecting(requestId);
     try {
-      const response = await fetch(`http://localhost:8000/api/password-reset-requests/${requestId}/`, {
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/password-reset-requests/${requestId}/`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Search, Mail, Calendar, Ban, Eye, X, Award, Loader2 } from 'lucide-react';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface User {
   id: number;
   username: string;
@@ -22,14 +24,17 @@ export default function UserManagementPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/admin/users/', { cache: 'no-store' });
+        const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/users/?page=${currentPage}`, { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
-          setUsers(data);
+          setUsers(data.results);
+          setTotalPages(data.total_pages);
         }
       } catch (err) {
         console.error("Network Error:", err);
@@ -40,7 +45,33 @@ export default function UserManagementPage() {
     };
 
     fetchUsers();
-  }, []);
+  }, [currentPage]);
+
+  const handleToggleUserStatus = async (userId: number, currentStatus: boolean) => {
+    const nextStatus = !currentStatus;
+    
+    try {
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/toggle-status/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: nextStatus })
+      });
+      
+      if (response.ok) {
+        // If the user was deactivated, remove them from the active users list immediately
+        if (!nextStatus) {
+          setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+        } else {
+          // If they were activated (unlikely from this page but for safety), update their status
+          setUsers(prevUsers => 
+            prevUsers.map(u => u.id === userId ? { ...u, is_active: nextStatus } : u)
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Failed to alter user lifecycle state:", error);
+    }
+  };
 
   const displayedUsers = [...users]
     .filter(user => 
@@ -162,17 +193,17 @@ export default function UserManagementPage() {
                             {user.is_active ? 'Active' : 'Inactive'}
                           </div>
                         </td>
-                        <td className="px-8 py-5 text-right space-x-2">
+                        <td className="px-8 py-5 text-right">
                           <button 
-                            onClick={() => setSelectedUser(user)}
-                            className="inline-flex items-center gap-1.5 text-sm font-bold text-cyan-500 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 px-3 py-1.5 rounded-xl transition-all"
+                            onClick={() => handleToggleUserStatus(user.id, user.is_active)}
+                            className={`inline-flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-xl transition-all ${
+                              user.is_active 
+                                ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
+                                : 'text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                            }`}
                           >
-                            <Eye size={14} />
-                            View Details
-                          </button>
-                          <button className="inline-flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-xl transition-all">
                             <Ban size={14} />
-                            Deactivate
+                            {user.is_active ? 'Deactivate' : 'Activate'}
                           </button>
                         </td>
                       </tr>
@@ -189,10 +220,24 @@ export default function UserManagementPage() {
             </table>
           </div>
           
-          <div className="p-6 border-t border-gray-50 dark:border-gray-800 text-center">
-             <button className="text-sm font-bold text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
-               Load More Users
-             </button>
+          <div className="flex justify-between items-center px-8 py-5 border-t border-gray-50 dark:border-gray-800">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-bold text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Next
+            </button>
           </div>
         </div>
       </main>

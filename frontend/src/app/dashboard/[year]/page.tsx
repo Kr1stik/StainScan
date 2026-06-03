@@ -29,6 +29,8 @@ import {
 } from 'recharts';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface DashboardStats {
   totalUsers: number;
   totalScans: number;
@@ -47,12 +49,10 @@ export default function YearlyAnalysisPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const itemsPerPage = 15;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = yearlyScans.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(yearlyScans.length / itemsPerPage);
+  const currentItems = yearlyScans;
 
   const getStainColor = (name: string) => {
     const colors: Record<string, string> = {
@@ -68,14 +68,18 @@ export default function YearlyAnalysisPage() {
       try {
         setIsLoading(true);
         const [statsRes, trendRes, historyRes] = await Promise.all([
-          fetch(`http://localhost:8000/api/admin/dashboard/?year=${currentYear}`),
-          fetch(`http://localhost:8000/api/analytics/growth/?year=${currentYear}`),
-          fetch(`http://localhost:8000/api/admin/history/?year=${currentYear}`)
+          fetch(`${NEXT_PUBLIC_API_URL}/api/admin/dashboard/?year=${currentYear}`),
+          fetch(`${NEXT_PUBLIC_API_URL}/api/analytics/growth/?year=${currentYear}`),
+          fetch(`${NEXT_PUBLIC_API_URL}/api/admin/history/?year=${currentYear}&page=${currentPage}`)
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
         if (trendRes.ok) setTrendData(await trendRes.json());
-        if (historyRes.ok) setYearlyScans(await historyRes.json());
+        if (historyRes.ok) {
+          const data = await historyRes.json();
+          setYearlyScans(data.results || []);
+          setTotalPages(data.total_pages || 1);
+        }
       } catch (err) {
         setError("Failed to fetch historical data.");
       } finally {
@@ -83,7 +87,7 @@ export default function YearlyAnalysisPage() {
       }
     };
     fetchYearData();
-  }, [currentYear]);
+  }, [currentYear, currentPage]);
 
   if (isLoading) {
     return (

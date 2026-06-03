@@ -24,6 +24,8 @@ import {
 import { toast } from 'sonner';
 import Sidebar from '@/src/components/Sidebar';
 
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface HistoryItem {
   id: number;
   user: string;
@@ -43,14 +45,16 @@ export default function HistoryPage() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchHistory = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/admin/history/', { cache: 'no-store' });
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/admin/history/?page=${currentPage}`, { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
-        setHistory(data);
+        setHistory(data.results);
+        setTotalPages(data.total_pages);
       }
     } catch (err) {
       console.error("Network Error:", err);
@@ -62,24 +66,17 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [currentPage]);
 
   // Reset to page 1 on search
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const filteredHistory = history.filter((item) => 
+  const displayedHistory = history.filter((item) => 
     item.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.stain_detected?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.garment?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
-  const paginatedHistory = filteredHistory.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
   );
 
   return (
@@ -152,8 +149,8 @@ export default function HistoryPage() {
                         </div>
                       </td>
                     </tr>
-                  ) : paginatedHistory.length > 0 ? (
-                    paginatedHistory.map((item) => (
+                  ) : displayedHistory.length > 0 ? (
+                    displayedHistory.map((item) => (
                       <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-2">
@@ -208,12 +205,30 @@ export default function HistoryPage() {
             </div>
 
             {/* Pagination Controls */}
-            {/* ... */}
+            <div className="flex justify-between items-center px-8 py-5 border-t border-gray-50 dark:border-gray-800">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-bold text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
 
           {!isLoading && history.length > 0 && (
             <div className="text-center py-6">
-              <p className="text-sm text-gray-400 italic">Showing {filteredHistory.length} scan results</p>
+              <p className="text-sm text-gray-400 italic">Showing {displayedHistory.length} scan results</p>
             </div>
           )}
 
